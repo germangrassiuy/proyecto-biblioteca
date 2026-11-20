@@ -280,17 +280,41 @@ junction, asi que se edita en el escritorio y se ve en
 
 ## 11. Puesta en marcha del 19/11/2026
 
-- **La base ahora se llama `biblioteca`**, no `libreria`. En esta PC ya habia
-  otra base `libreria` con otro esquema (articulos, categorias, venta_lineas;
-  creada el 27/09) y datos cargados. `biblioteca.sql` borra y recrea sus tablas,
-  asi que importarlo arriba la habria roto. Se cambio el nombre en
-  `biblioteca.sql` y en `db.php`; la otra base quedo intacta.
 - **Recableado:** verde en 12, rojo en 10, zumbador en 7. El HC-08 paso al pin 2
   porque el 10 lo ocupa el rojo. Los pines quedaron como constantes al principio
   de `libreria_simple_fisico.ino`.
 - **El mostrador volvio al cable USB:** carga `arduino.js` (Web Serial) en vez
   de `bluetooth.js`. Es una sola linea en `mostrador.php`.
 - **La placa tiene cargado `libreria_simple_fisico`** (3 campos). Verificado:
-  contesta `recibi: [...]` a cada mensaje y el LED rojo prende.
+  contesta `recibi: [...]` a cada mensaje, el LED rojo prende, el zumbador
+  suena y la LCD se detecta (READY sin ERR:LCD, 20/11).
 - El Arduino IDE de esta PC esta vacio; el programa se compilo con el avr-gcc y
-  el avrdude que quedaron en `AppData\Local\Arduino15`.
+  el avrdude que quedaron en `AppData\Local\Arduino15`
+  (`herramientas/compilar_y_cargar.sh`).
+
+## 12. Portable y en GitHub (20/11/2026)
+
+La PC de desarrollo no es la que se usa con el Arduino. Por eso el sistema
+pasa a correr en cualquier Windows **sin instalar nada**:
+
+- **SQLite en vez de MySQL.** La base es el archivo
+  `libreria/datos/biblioteca.sqlite`, y `db.php` la crea sola la primera vez
+  leyendo `biblioteca.sql`. Lo que cambio del SQL, explicado donde aparece:
+  `INTEGER PRIMARY KEY` por `AUTO_INCREMENT`, `TEXT` + `CHECK` por `ENUM`,
+  `date('now','localtime')` por `CURDATE()`, `julianday()` por `DATEDIFF()`,
+  sin `FOR UPDATE` (SQLite bloquea la base entera al escribir) y
+  `PRAGMA foreign_keys = ON` en cada conexion. Las reglas de la base (las
+  `CHECK`, las claves foraneas, el `UNIQUE` de la etiqueta) siguen todas.
+- **PHP adentro.** `php/` trae el PHP 8.2 oficial reducido a lo que se usa
+  (10,6 MB). `INICIAR.bat` levanta el servidor de PHP en `127.0.0.1:8642` y
+  abre Edge. Se usa 127.0.0.1 y no localhost porque en esta PC otro programa
+  ocupaba 127.0.0.1 en el puerto que se probo primero, y con localhost el
+  navegador podia terminar hablandole a ese programa.
+- **Verificado sobre un clon limpio**, como lo haria la otra PC, y tambien en
+  una carpeta con espacios en el nombre: 37 pruebas de punta a punta (roles,
+  modos, cobro, transaccion sin stock que no escribe nada, alquiler y
+  devolucion con fechas locales, las reglas de la base, paginas sin errores).
+- Los PDF y ZIP (guias, respuestas del docente, fotos) **no se suben**: quedan
+  solo en la PC de desarrollo (`.gitignore`).
+- En la PC de desarrollo sigue existiendo la base MySQL `biblioteca` del 19/11
+  y la `libreria` del 27/09; el sistema ya no usa ninguna de las dos.
