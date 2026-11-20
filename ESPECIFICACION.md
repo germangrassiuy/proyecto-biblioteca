@@ -24,7 +24,7 @@ Ultima actualizacion: 14/09/2026.
 | Lector ZGB-J43-NE, 1D, USB, tipo teclado (HID) | Probado y funcionando |
 | Arduino Uno clon CH340, en COM4 | Conectado, programa cargado |
 | LCD 16x2 I2C (SDA a A4, SCL a A5) | Conectada y probada |
-| LED verde | Pin 12 (recableado 19/11/2026) |
+| LED verde | Pin 12 (recableado 19/11/2026) — **probado, enciende** |
 | LED rojo | Pin 10 (recableado 19/11/2026) — **probado, enciende** |
 | Zumbador piezo | Pin 7 (recableado 19/11/2026) |
 | HC-08, TXD | Pin 2 (antes 10: ahi quedo el LED rojo) |
@@ -286,7 +286,7 @@ junction, asi que se edita en el escritorio y se ve en
 - **El mostrador volvio al cable USB:** carga `arduino.js` (Web Serial) en vez
   de `bluetooth.js`. Es una sola linea en `mostrador.php`.
 - **La placa tiene cargado `libreria_simple_fisico`** (3 campos). Verificado:
-  contesta `recibi: [...]` a cada mensaje, el LED rojo prende, el zumbador
+  contesta `recibi: [...]` a cada mensaje, los dos LED prenden, el zumbador
   suena y la LCD se detecta (READY sin ERR:LCD, 20/11).
 - El Arduino IDE de esta PC esta vacio; el programa se compilo con el avr-gcc y
   el avrdude que quedaron en `AppData\Local\Arduino15`
