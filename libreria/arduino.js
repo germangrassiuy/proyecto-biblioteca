@@ -40,12 +40,22 @@ async function conectar() {
         estado('Este navegador no puede usar el puerto serie. Abri la pagina en Chrome o Edge de escritorio.', 'mal');
         return;
     }
+    // Si quedo agarrado un puerto de una conexion anterior que fallo, se
+    // suelta primero: si no, al abrirlo de nuevo dice "ocupado".
+    await soltarPuerto();
+    seDesenchufo = false;
+
     try {
         puerto = await navigator.serial.requestPort();
         await puerto.open({ baudRate: 9600 });
 
         escritor = puerto.writable.getWriter();
         document.getElementById('conectar').disabled = true;
+
+        // El cursor quedo en el boton, y un boton desactivado lo suelta:
+        // el primer codigo escaneado no iria a ningun lado. Se lo
+        // devolvemos al campo de escaneo, que esta adentro del iframe.
+        enfocarElCampo();
 
         // Al abrir el puerto, el Uno se reinicia y tarda unos 2 segundos
         // en arrancar. Cuando termina manda READY. Lo escuchamos para
@@ -90,7 +100,10 @@ async function escuchar() {
             }
         }
     } catch (error) {
-        estado('Se corto la conexion con el Arduino: ' + error.message, 'mal');
+        if (!seDesenchufo) {
+            estado('Se corto la conexion con el Arduino (' + error.message + '). Pulsa "Conectar Arduino".', 'mal');
+        }
+        soltarPuerto();
     }
 }
 
@@ -109,10 +122,71 @@ async function alArduino(linea) {
         // El Arduino lee hasta encontrar un salto de linea: por eso el \n.
         await escritor.write(new TextEncoder().encode(linea + '\n'));
     } catch (error) {
-        estado('No se pudo escribir en el Arduino: ' + error.message, 'mal');
-        escritor = null;
-        document.getElementById('conectar').disabled = false;
+        if (!seDesenchufo) {
+            estado('No se pudo mandar al Arduino (' + error.message + '). Pulsa "Conectar Arduino".', 'mal');
+        }
+        soltarPuerto();
     }
+}
+
+/* ------------------------------------------------------------
+   SOLTAR EL PUERTO - cuando algo falla, se suelta TODO.
+   ------------------------------------------------------------
+   Si se corta la conexion y la pagina solo "se olvida" del puerto, el
+   navegador lo sigue teniendo abierto por dentro. Al tocar "Conectar"
+   de nuevo, Windows contesta que el puerto esta OCUPADO... ocupado por
+   esta misma pagina. Por eso hay que cerrarlo de verdad, y en orden:
+   primero se sueltan el lector y el escritor, despues se cierra el
+   puerto (con alguno de los dos agarrado, close() no deja).
+   Cada paso va en su try: si el aparato ya no existe, fallan, y no
+   importa, lo que importa es que el puerto quede libre.
+   ------------------------------------------------------------ */
+async function soltarPuerto() {
+    const viejo = puerto;
+    puerto = null;
+    if (lector) {
+        try { await lector.cancel(); } catch (e) {}
+        try { lector.releaseLock(); } catch (e) {}
+        lector = null;
+    }
+    if (escritor) {
+        try { escritor.releaseLock(); } catch (e) {}
+        escritor = null;
+    }
+    if (viejo) {
+        try { await viejo.close(); } catch (e) {}
+    }
+    document.getElementById('conectar').disabled = false;
+}
+
+/* ------------------------------------------------------------
+   CUANDO WINDOWS DEJA DE VER EL ARDUINO
+   ------------------------------------------------------------
+   El navegador avisa cuando un aparato USB desaparece. No es lo mismo
+   que un error del programa, y conviene decirlo distinto: si pasa
+   justo al escanear, casi siempre es FALTA DE CORRIENTE. El Arduino
+   prende el LED, el zumbador y la pantalla al mismo tiempo; si eso
+   pide mas de lo que da el USB (o un hub sin fuente compartido con el
+   lector), la placa se apaga un instante y Windows la pierde.
+   ------------------------------------------------------------ */
+let seDesenchufo = false;
+
+navigator.serial && navigator.serial.addEventListener('disconnect', () => {
+    seDesenchufo = true;
+    estado('Windows dejo de ver el Arduino por USB: se desenchufo, o se apago un instante por falta de corriente. Pulsa "Conectar Arduino".', 'mal');
+    soltarPuerto();
+});
+
+navigator.serial && navigator.serial.addEventListener('connect', () => {
+    if (!escritor) estado('El Arduino volvio a aparecer. Pulsa "Conectar Arduino".', 'mal');
+});
+
+/* El campo esta en otra pagina (la del iframe "panel"), por eso se lo
+   busca a traves de frames.panel. Si justo se esta recargando, no esta:
+   no pasa nada, la recarga misma lo enfoca. */
+function enfocarElCampo() {
+    const campo = window.frames.panel && window.frames.panel.document.getElementById('codigo');
+    if (campo) campo.focus();
 }
 
 document.getElementById('conectar').addEventListener('click', conectar);

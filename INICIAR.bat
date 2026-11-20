@@ -32,10 +32,29 @@ echo   NO CIERRES ESTA VENTANA mientras uses el sistema: es el servidor.
 echo   Para apagarlo, cerrala.
 echo.
 
+rem QUE NAVEGADOR. El boton "Conectar Arduino" necesita Edge o Chrome:
+rem Firefox no tiene Web Serial. Se busca primero Edge, despues Chrome,
+rem en la lista de programas instalados de Windows (App Paths). No se
+rem pide Edge a ciegas porque hay PCs donde lo desinstalaron, y ahi
+rem Windows tira un cartel de error en vez de abrir la pagina.
+set NAVEGADOR=
+for %%N in (msedge.exe chrome.exe) do (
+    if not defined NAVEGADOR reg query "HKLM\SOFTWARE\Microsoft\Windows\CurrentVersion\App Paths\%%N" >nul 2>&1 && set NAVEGADOR=%%N
+    if not defined NAVEGADOR reg query "HKCU\SOFTWARE\Microsoft\Windows\CurrentVersion\App Paths\%%N" >nul 2>&1 && set NAVEGADOR=%%N
+)
+if not defined NAVEGADOR (
+    echo   OJO: no se encontro Edge ni Chrome. Se abre el navegador que haya,
+    echo   pero para conectar el Arduino hace falta Edge o Chrome.
+    echo.
+)
+
 rem El navegador se abre 2 segundos despues, cuando el servidor ya esta
-rem escuchando. Se pide Edge porque el boton "Conectar Arduino" necesita
-rem Edge o Chrome: Firefox no tiene Web Serial.
-start "" /b cmd /c "ping -n 3 127.0.0.1 >nul & start msedge http://%DIRECCION%/"
+rem escuchando.
+if defined NAVEGADOR (
+    start "" /b cmd /c "ping -n 3 127.0.0.1 >nul & start %NAVEGADOR% http://%DIRECCION%/"
+) else (
+    start "" /b cmd /c "ping -n 3 127.0.0.1 >nul & start http://%DIRECCION%/"
+)
 
 rem El servidor web que trae PHP adentro. -t libreria dice que carpeta
 rem se publica. La ruta de las extensiones va completa (%~dp0 es la

@@ -72,8 +72,12 @@ if ($vista === 'inicio' && $codigo !== '') {
                  l.nombre, l.autor, l.isbn
            FROM  ejemplares e
            JOIN  libros l ON l.id = e.libro_id
-          WHERE  e.codigo_interno = ?'
+          WHERE  e.codigo_interno = ? COLLATE NOCASE'
     );
+    // COLLATE NOCASE: que "v0001" encuentre a "V0001". En MySQL eso venia
+    // solo (la base comparaba sin mirar mayusculas); SQLite por defecto
+    // las distingue, y alguien tipeando el codigo en minuscula recibia
+    // "no encontrado" de un libro que esta.
     $consulta->execute([$codigo]);
     $ejemplar = $consulta->fetch();
 
@@ -161,10 +165,26 @@ foreach ($venta as $r) {
 <!-- El campo de escaneo. El lector escribe el codigo y manda Enter,
      y ese Enter envia este formulario. Sin JavaScript. -->
 <form method="get" action="escaneo.php" class="buscador">
-    <input type="text" name="codigo" value="" autofocus autocomplete="off"
+    <input type="text" name="codigo" id="codigo" value="" autofocus autocomplete="off"
            placeholder="Escanea o escribi el codigo + Enter">
     <button type="submit">Buscar</button>
 </form>
+<script>
+/* EL CURSOR SIEMPRE EN EL CAMPO.
+   El lector escribe donde este el cursor. Si el cursor no esta en este
+   campo, el codigo escaneado se pierde.
+
+   El autofocus de arriba deberia alcanzar, y no alcanza: el navegador
+   lo aplica UNA sola vez por pagina, la primera vez que se abre el
+   mostrador. Esta pagina vive dentro de un iframe y se recarga en cada
+   escaneo, pero para el navegador la pagina sigue siendo el mostrador,
+   asi que desde el segundo escaneo ignora el autofocus.
+
+   Es la segunda excepcion a la regla de "JavaScript solo para el
+   Arduino", y por la misma razon que la primera: en HTML no hay forma
+   de pedirlo. */
+document.getElementById('codigo').focus();
+</script>
 
 <?php if ($errorCobro !== ''): ?>
     <p class="error">No se cobro nada: <?= esc($errorCobro) ?></p>
@@ -262,7 +282,7 @@ foreach ($venta as $r) {
 
 <?php if ($lineaArduino !== null): ?>
 <script>
-/* LA UNICA LINEA DE JAVASCRIPT DEL SISTEMA.
+/* LA LINEA QUE LE HABLA AL ARDUINO.
    Le pasa el mensaje a la pagina de afuera, que es la que tiene el
    puerto del Arduino abierto. Solo eso: no calcula ni decide nada.
    El "if" es porque si alguien abre esta pagina suelta, fuera del

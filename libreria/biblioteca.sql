@@ -138,7 +138,10 @@ CREATE TABLE ejemplares (
     -- Lo que dice la etiqueta pegada. V=venta, A=alquiler, D=digital.
     -- UNIQUE: la base NO deja repetir una etiqueta, porque entonces no
     -- se sabria a cual de las dos filas corresponde un escaneo.
-    codigo_interno VARCHAR(20) NOT NULL UNIQUE,
+    -- COLLATE NOCASE: "V0001" y "v0001" son la misma etiqueta, tanto para
+    -- buscar como para el UNIQUE. (SQLite distingue mayusculas si no se
+    -- le dice; MySQL no las distinguia.)
+    codigo_interno VARCHAR(20) NOT NULL UNIQUE COLLATE NOCASE,
 
     libro_id       INT NOT NULL,
 

@@ -22,7 +22,9 @@ LOS ARCHIVOS
   mostrador.php   La pantalla principal. NO se recarga nunca: adentro tiene
                   un iframe con escaneo.php. Aca vive la conexion al Arduino.
   escaneo.php     Lo que pasa adentro del iframe: campo, resultado, total.
-  arduino.js      El UNICO JavaScript. Solo manda la linea al puerto serie.
+  arduino.js      El JavaScript del Arduino. Solo manda la linea al puerto serie.
+                  (El otro JavaScript del sistema es una linea en escaneo.php
+                   que deja el cursor en el campo: ahi esta explicado por que.)
   libros.php      Alta y listado de titulos.
   ejemplares.php  Alta y listado de ejemplares (lo que se escanea).
   alquileres.php  Que libros estan afuera, quien los tiene, y devolverlos.

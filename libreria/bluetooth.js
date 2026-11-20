@@ -88,6 +88,11 @@ async function conectar() {
         document.getElementById('conectar').disabled = true;
         estado('Arduino conectado por Bluetooth. Ya se puede escanear.', 'ok');
 
+        // El cursor quedo en el boton, y un boton desactivado lo suelta:
+        // el primer codigo escaneado no iria a ningun lado. Se lo
+        // devolvemos al campo de escaneo, que esta adentro del iframe.
+        enfocarElCampo();
+
     } catch (error) {
         // Si el usuario cierra la lista sin elegir nada, tambien cae aca.
         estado('No se pudo conectar: ' + error.message, 'mal');
@@ -132,6 +137,14 @@ async function alArduino(linea) {
         canal = null;
         document.getElementById('conectar').disabled = false;
     }
+}
+
+/* El campo esta en otra pagina (la del iframe "panel"), por eso se lo
+   busca a traves de frames.panel. Si justo se esta recargando, no esta:
+   no pasa nada, la recarga misma lo enfoca. */
+function enfocarElCampo() {
+    const campo = window.frames.panel && window.frames.panel.document.getElementById('codigo');
+    if (campo) campo.focus();
 }
 
 document.getElementById('conectar').addEventListener('click', conectar);

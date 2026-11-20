@@ -9,7 +9,10 @@ Ultima actualizacion: 14/09/2026.
 
 - **Stack permitido: HTML, CSS, PHP y SQL.** Es una consigna pedagogica: los
   alumnos no pueden usar otra cosa.
-- **JavaScript solo para hablar con el Arduino**, el minimo indispensable, y
+- **JavaScript solo para hablar con el Arduino** (y, desde el 20/11, una linea
+  que deja el cursor en el campo de escaneo: el `autofocus` de HTML el
+  navegador lo aplica una sola vez por pagina y el iframe se recarga en cada
+  escaneo; explicado en `escaneo.php`), el minimo indispensable, y
   solo cuando sea extremadamente necesario. El porque esta explicado en
   `explicaciones/01-php-javascript-y-el-arduino.md`.
 - **Los presupuestos salen del proyecto.** Las guias en PDF los traian; ya no
