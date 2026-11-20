@@ -1,0 +1,260 @@
+LA LIBRERIA EN TINKERCAD
+========================
+
+Para que sirve esta carpeta
+---------------------------
+Es el mismo programa del mostrador, adaptado para armarlo en Tinkercad,
+donde NO hay lector de codigos, NO hay computadora con PHP y NO hay base
+de datos. Sirve para practicar toda la parte del Arduino sin tener el
+hardware en la mano.
+
+Funciona igual porque el Arduino nunca busco nada en la base. La
+computadora resuelve todo y le manda una linea de texto ya masticada:
+el titulo, el precio y si hay que prender verde o rojo. Al Arduino le da
+lo mismo si esa linea la escribe PHP o la escribe un alumno a mano.
+
+El archivo que se copia en Tinkercad es libreria_tinkercad.ino
+(pegarlo en el panel de codigo, en modo Text).
+
+
+QUE SE NECESITA EN TINKERCAD
+----------------------------
+  1 Arduino Uno R3
+  1 protoboard
+  1 LCD 16x2 I2C (la de 4 patas: GND, VCC, SDA, SCL)
+  1 LED verde        + 1 resistencia de 220 ohm
+  1 LED rojo         + 1 resistencia de 220 ohm
+  1 piezo (el zumbador)
+
+Y en el boton "Libraries" del panel de codigo hay que agregar
+Adafruit LiquidCrystal. Es la que maneja la pantalla I2C en Tinkercad
+(ver mas abajo por que no es la misma que en la PC).
+
+CABLEADO
+--------
+  LCD I2C:    GND ---- GND        VCC ---- 5V
+              SDA ---- SDA        SCL ---- SCL
+
+              Los pines SDA y SCL del Arduino son los dos que estan
+              arriba de AREF, sin rotulo en el dibujo de Tinkercad.
+              Tambien sirve SDA a A4 y SCL a A5: son los mismos dos
+              pines (ver mas abajo).
+
+              OJO: los dos cables tienen que CRUZARSE. En el header del
+              Arduino el orden desde el borde es SCL y despues SDA; en
+              la pantalla es al revez, SDA arriba y SCL abajo. Si los
+              cables quedan paralelos, SDA termina conectado a SCL y la
+              pantalla no muestra nada.
+
+  LED verde:  pata larga (la mas larga, el +) ---- pin 5
+              pata corta ---- resistencia 220 ohm ---- GND
+  LED rojo:   pata larga ---- pin 6
+              pata corta ---- resistencia 220 ohm ---- GND
+  Piezo:      pata + ---- pin 8
+              pata - ---- GND
+
+  Son los MISMOS pines que la placa de verdad. Lo que se arma aca se
+  puede pasar al Arduino fisico sin cambiar una linea.
+
+Tres cosas que salen mal siempre
+  - La resistencia no es opcional. Sin ella el LED se quema, y Tinkercad
+    lo simula: aparece el cartel de que el LED se quemo. Conviene
+    probarlo una vez a proposito, es la unica oportunidad de quemar algo
+    sin que cueste plata.
+  - Las dos patas del LED NO pueden ir en la misma fila de la protoboard.
+    Los agujeros de una fila estan unidos por dentro de a cinco: si las
+    dos patas caen en la misma fila quedan unidas entre si y el LED no
+    prende nunca.
+  - El LED tiene lado. Pata larga al pin, pata corta a la resistencia.
+    Al revez no prende y no se rompe nada: un LED solo deja pasar la
+    corriente en un sentido.
+
+DOS LUGARES DONDE ENCHUFAR LA PANTALLA, Y SON EL MISMO
+------------------------------------------------------
+El Uno tiene los pines SDA y SCL arriba de AREF, y ahi es donde conviene
+conectar la pantalla. Pero si en vez de eso se conecta SDA a A4 y SCL a
+A5, funciona exactamente igual. No es casualidad: son los MISMOS DOS
+PINES.
+
+El chip del Uno (un ATmega328P) tiene un solo par de patas capaces de
+hablar I2C. En el zocalo esas dos patas aparecen como A4 y A5, y ademas
+estan repetidas arriba de AREF con su nombre propio, para poder usar la
+pantalla sin ocupar el lugar de las analogicas. Dos juegos de agujeros,
+un solo par de cables por dentro.
+
+De ahi salen dos consecuencias practicas:
+  - Da lo mismo cual de los dos lugares se use.
+  - NO se pueden usar los dos a la vez para cosas distintas. Si la
+    pantalla esta en SDA/SCL, A4 y A5 ya estan ocupados aunque se vean
+    libres.
+
+Que la biblioteca no pregunte nunca en que pines esta la pantalla es la
+prueba: no hay nada que elegir, el I2C sale por donde puede salir.
+
+I2C se llama asi porque le alcanzan DOS cables para todo: SDA lleva los
+datos y SCL el compas que marca cuando leerlos. Por eso la pantalla usa
+4 patas en vez de las 16 de la LCD comun: adentro trae un chip que
+recibe por esos dos cables y se encarga del resto. La contra es que hay
+que decirle a la biblioteca la DIRECCION de la pantalla (el 0 en el
+programa), porque en esos dos cables pueden colgarse varios aparatos y
+cada uno atiende cuando lo llaman por su numero.
+
+
+COMO SE PRUEBA
+--------------
+  1. Start Simulation.
+  2. Abrir el Monitor Serial (esta abajo del panel de codigo).
+  3. Escribir una de las lineas de abajo en el campo de texto y pulsar
+     Send.
+
+Al arrancar tiene que aparecer:
+
+    READY
+    +----------------+
+    |Libreria lista  |
+    |Escanee un libro|
+    +----------------+
+
+Lo mismo tiene que aparecer en la LCD: el titulo arriba, el precio
+abajo. Ese marco del monitor es la pantalla dibujada con texto, 16
+columnas por 2 filas y cortada a los 16 caracteres igual que la de
+verdad.
+
+Que salga en los dos lugares es a proposito: mientras la pantalla no
+este cableada, el monitor es la unica forma de ver si el programa anda,
+y ademas guarda el historial de todo lo que paso, que en la LCD se
+pierde con el mensaje siguiente.
+
+
+LINEAS PARA COPIAR Y PEGAR
+--------------------------
+El formato es:   accion|encontrado|codigo|titulo|precio|total
+
+  accion      S = modo scanner, V = modo venta, C = pedido cerrado
+  encontrado  1 = el libro existe en la base, 0 = no esta
+  codigo      el codigo interno del ejemplar (no el ISBN de la tapa)
+  titulo      ya resuelto por la computadora
+  precio      el de ESE ejemplar
+  total       lo que suma el pedido hasta ahora
+
+MODO SCANNER: muestra y no suma nada
+  S|1|V0001|Cien anios|690.00|0.00
+      -> LED VERDE, bip corto agudo, titulo y precio.
+
+  S|1|V0002|El nombre de la rosa|850.00|0.00
+      -> igual, y el titulo aparece CORTADO: no entra en 16 letras.
+
+  S|0|ZZZZZ|-|0.00|0.00
+      -> LED ROJO, bip largo grave, NO ENCONTRADO con el codigo.
+
+MODO VENTA: muestra lo mismo, pero suma a escondidas
+  V|1|V0001|Cien anios|690.00|690.00
+  V|1|A0007|El Aleph|450.00|1140.00
+      -> verde las dos veces. Si se dejan pasar 3 segundos sin mandar
+         nada, aparece solo:
+
+             +----------------+
+             |TOTAL COMPRA    |
+             |$1140.00        |
+             +----------------+
+
+  V|0|ZZZZZ|-|0.00|1140.00
+      -> rojo, y a los 3 segundos el total SIGUE en 1140.00. Que un
+         codigo fallado no borre la venta es una regla del sistema, no
+         una casualidad: el cliente no tiene por que perder la compra
+         porque una etiqueta este mal pegada.
+
+CERRAR EL PEDIDO
+  C|1|-|-|0.00|1140.00
+      -> bip de cierre, "Pedido cerrado" con el total, y la suma vuelve
+         a cero.
+
+PARA VER QUE PASA CON UN MENSAJE ROTO
+  V|1|V0001|Cien anios
+      -> contesta ERR:FORMATO y no hace nada mas. Faltan campos, y un
+         mensaje incompleto no se adivina.
+
+
+SI LA PANTALLA SE VE TODA NEGRA
+-------------------------------
+Es el sintoma mas enganioso del armado, porque se ve igual en tres casos
+que no tienen nada que ver entre si. Hay que separarlos, y para eso NO se
+mira la pantalla: se mira el Monitor Serial.
+
+  Si el Monitor Serial esta VACIO (no aparece READY)
+    El programa no esta corriendo. Casi siempre es que falta agregar la
+    biblioteca Adafruit LiquidCrystal con el boton Libraries, y entonces
+    Tinkercad no compilo nada. Tiene que haber un error en rojo.
+
+  Si aparece READY y el marco con "Libreria lista"
+    El programa corre perfecto: el problema esta en el cableado de la
+    pantalla, y casi siempre es la ALIMENTACION.
+
+    Revisar que VCC vaya al + y GND al -, sin cruzarlos, y que el riel
+    donde estan enchufados sea el que recibe los cables del Arduino. En
+    la protoboard los rieles de arriba y los de abajo NO estan unidos
+    entre si: si el Arduino alimenta los de abajo y la pantalla esta
+    colgada de los de arriba, hay que puentearlos con dos cables.
+
+    (Aca hubo un error nuestro que conviene dejar escrito: se penso
+    primero que faltaba prender la luz de fondo con lcd.setBacklight(1).
+    Se probo y NO era eso: en Tinkercad la pantalla arranca con la luz
+    prendida. La causa real era el positivo mal conectado. Buena leccion
+    sobre suponer una causa antes de comprobarla.)
+
+La moraleja sirve para todo el proyecto: cuando un sintoma puede venir de
+tres causas, hay que buscar la senial que las distingue en vez de probar
+arreglos a ver cual acierta. Aca esa senial es el READY.
+
+SI EL MONITOR SERIAL NO PARECE HACER NADA
+-----------------------------------------
+El Monitor Serial de Tinkercad tiene campo de texto y boton Send, pero
+segun la version NO agrega el salto de linea al enviar. El programa lee
+letra por letra y necesita saber donde termina la linea, asi que acepta
+tres finales distintos:
+
+  1. El Enter normal ('\n' o '\r'), si Tinkercad lo manda.
+  2. Un numeral al final, escrito a mano:
+         S|1|V0001|Cien anios|690.00|0.00#
+  3. El silencio: si ya llegaron los 5 separadores y pasa 1 segundo sin
+     que llegue una letra nueva, la linea se cierra sola.
+
+Con cualquiera de los tres anda. Si mandaste una linea y no paso nada,
+probá con el numeral al final.
+
+
+PARA PROBAR EL CABLEADO SIN TIPEAR NADA
+---------------------------------------
+Arriba del programa hay una linea:
+
+    const bool MODO_DEMO = false;
+
+Cambiandola a true, la placa se manda los codigos a si misma, uno cada 4
+segundos, y recorre sola las cuatro situaciones: encontrado en modo
+scanner, encontrado en modo venta, no encontrado (y el total que no se
+pierde), y el pedido cerrado. Sirve para ver si los LED y el zumbador
+estan bien conectados antes de pelearse con el Monitor Serial.
+Acordarse de volverlo a false para practicar a mano.
+
+
+QUE CAMBIA RESPECTO DE LA PLACA DE VERDAD
+-----------------------------------------
+La carpeta de al lado, arduino/libreria_lector/, tiene el programa que
+esta cargado en el Arduino fisico. Las diferencias son tres:
+
+  - La biblioteca de la pantalla. Es la MISMA LCD 16x2 por I2C y el
+    mismo cable de cuatro hilos, pero el programa que la maneja cambia:
+    en la PC es hd44780 (que en Tinkercad no existe) y en Tinkercad es
+    Adafruit LiquidCrystal (que en la PC no esta instalada). Cambian el
+    include y la linea que crea el objeto; el resto del codigo de
+    pantalla es igual. Aca, ademas, los dos renglones se espejan en el
+    Monitor Serial.
+  - El final de linea. El real espera solo el '\n', porque arduino.js
+    siempre lo manda. Este acepta tres finales por lo de Tinkercad.
+  - El MODO_DEMO, que en la placa real no tiene sentido: ahi los codigos
+    los manda la computadora.
+
+Todo lo demas es identico, y a proposito: los pines (5, 6, 8), los seis
+campos del mensaje, las respuestas (READY, OK, ERR:FORMATO, ERR:LARGO) y
+los 3 segundos medidos con millis(). Lo que se practica en Tinkercad
+sirve tal cual en la placa fisica.

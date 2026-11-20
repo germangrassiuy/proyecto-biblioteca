@@ -1,0 +1,55 @@
+<!doctype html>
+<html lang="es"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Lector de libros · Arduino</title>
+<style>
+body{font:18px system-ui;margin:0;background:#f2f5f4;color:#17332e}main{max-width:680px;margin:60px auto;padding:32px;background:white;border-radius:18px}h1{font-size:32px}button,input{font:inherit;padding:14px;border-radius:8px;border:1px solid #77978d}button{cursor:pointer;background:#125f50;color:white}button:disabled{opacity:.5;cursor:default}input{width:100%;box-sizing:border-box;margin:12px 0}small{display:block;line-height:1.6}#status{padding:16px;background:#e8f1ed;border-radius:8px;overflow-wrap:anywhere}#last{font:26px monospace;overflow-wrap:anywhere}label{display:block;margin-top:28px}a{color:#125f50}
+</style>
+<main><small>LIBRERÍA · VISOR DEL CLIENTE</small><h1>Del lector a la pantalla</h1>
+<p>Conectá el lector y el Arduino a la computadora. Cerrá el monitor serie del Arduino IDE.</p>
+<button id="connect">Conectar Arduino</button> <button id="disconnect" disabled>Desconectar</button>
+<p id="status" role="status">Sin conexión. Usá Chrome o Edge de escritorio.</p>
+<form id="form"><label for="code">Escaneá aquí el código del libro</label><input id="code" autocomplete="off" inputmode="numeric" placeholder="Código + Enter" disabled><button id="send" disabled>Enviar a la pantalla</button></form>
+<small>Hacé clic en el campo antes de escanear. El Enter del lector envía el código. También podés escribirlo a mano. Se admiten de 1 a 16 dígitos; no se verifica el ISBN ni se consulta SQL.</small>
+<p>Último código confirmado por Arduino:</p><div id="last">—</div>
+<script>
+const $=id=>document.getElementById(id);
+let port=null,reader=null,writer=null,reading=null,closing=false,ready=false,pending=null,readyTimer;
+function status(t){$('status').textContent=t;}
+function controls(){ $('connect').disabled=!!port; $('disconnect').disabled=!port; $('code').disabled=!ready; $('send').disabled=!ready||!!pending; }
+function finishPending(message){if(pending){clearTimeout(pending.timer);pending=null;}status(message);controls();}
+function line(s){
+ if(s==='READY'){clearTimeout(readyTimer);ready=true;status('Conectado. Hacé clic en el campo y escaneá.');controls();$('code').focus();}
+ else if(s.startsWith('OK:')){const v=s.slice(3);$('last').textContent=v;if(pending&&pending.code===v)finishPending('Arduino confirmó la escritura: '+v);}
+ else if(s.startsWith('ERR:')){finishPending(s==='ERR:LCD'?'Arduino no detecta la LCD. Revisá cableado y ejecutá I2CexpDiag.':'Arduino rechazó el código.');}
+}
+async function readLoop(){
+ let buffer='';const decoder=new TextDecoder();
+ try{while(!closing){const {value,done}=await reader.read();if(done)break;buffer+=decoder.decode(value,{stream:true});let pos;while((pos=buffer.indexOf('\n'))>=0){line(buffer.slice(0,pos).replace(/\r/g,''));buffer=buffer.slice(pos+1);}if(buffer.length>1024)buffer='';}}
+ catch(e){if(!closing)status('Se perdió la conexión: '+e.message);}
+ finally{reader.releaseLock();reader=null;if(!closing){ready=false;controls();status('Conexión terminada. Pulsá Desconectar y volvé a conectar.');}}
+}
+async function disconnect(){
+ closing=true;ready=false;clearTimeout(readyTimer);if(pending){clearTimeout(pending.timer);pending=null;}
+ try{if(reader)await reader.cancel();if(reading)await reading;if(writer){writer.releaseLock();writer=null;}if(port)await port.close();}catch(e){status(e.message);}
+ port=null;reading=null;closing=false;controls();status('Desconectado.');
+}
+$('connect').onclick=async()=>{
+ if(!('serial' in navigator)){status('Web Serial no está disponible. Abrí esta página en Chrome/Edge de escritorio mediante localhost.');return;}
+ try{
+ const selected=await navigator.serial.requestPort();await selected.open({baudRate:9600});port=selected;closing=false;ready=false;controls();
+ writer=port.writable.getWriter();reader=port.readable.getReader();status('Esperando al Arduino...');reading=readLoop();
+ readyTimer=setTimeout(()=>{if(!ready)status('Sin mensaje READY. Comprobá que cargaste el programa y pulsá RESET en el Uno.');},6000);
+ }catch(e){if(port)await disconnect();status('No se pudo conectar: '+e.message+'. Elegí el puerto del Arduino, no el lector.');}
+};
+$('disconnect').onclick=disconnect;
+$('form').onsubmit=async e=>{
+ e.preventDefault();if(!ready||!writer)return;
+ const code=$('code').value;
+ if(!/^\d{1,16}$/.test(code)){status('Ingresá entre 1 y 16 dígitos, sin espacios.');return;}
+ if(pending){status('Esperá la confirmación del código anterior antes de reenviar.');return;}
+ pending={code,timer:setTimeout(()=>finishPending('Sin confirmación: no puedo asegurar que se mostró el código. Revisá la conexión.'),3000)};controls();
+ try{await writer.write(new TextEncoder().encode(code+'\n'));if(pending)status('Enviado; esperando confirmación...');$('code').value='';$('code').focus();}
+ catch(err){finishPending('Error al enviar: '+err.message);}
+};
+controls();
+</script></main></html>

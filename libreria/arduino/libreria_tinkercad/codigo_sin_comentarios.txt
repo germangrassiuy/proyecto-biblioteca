@@ -1,0 +1,231 @@
+#include <Adafruit_LiquidCrystal.h>
+
+Adafruit_LiquidCrystal lcd(0);
+
+const byte PIN_VERDE    = 5;
+const byte PIN_ROJO     = 6;
+const byte PIN_ZUMBADOR = 8;
+
+const unsigned int BIP_OK_TONO      = 2000;
+const unsigned int BIP_OK_DURACION  = 90;
+const unsigned int BIP_MAL_TONO     = 400;
+const unsigned int BIP_MAL_DURACION = 400;
+const unsigned int BIP_CIERRE_TONO  = 1200;
+const unsigned int BIP_CIERRE_DURA  = 180;
+
+const unsigned long ESPERA_DEL_TOTAL   = 3000;
+const unsigned long DURACION_DE_LA_LUZ = 3000;
+
+const unsigned long CIERRE_POR_SILENCIO = 1000;
+
+const bool MODO_DEMO = false;
+
+const char *DEMO[] = {
+  "S|1|V0001|Cien anios|690.00|0.00",
+  "V|1|A0007|El Aleph|450.00|450.00",
+  "V|0|ZZZZZ|-|0.00|450.00",
+  "C|1|-|-|0.00|450.00"
+};
+const byte DEMO_PASOS = sizeof(DEMO) / sizeof(DEMO[0]);
+
+byte          demoPaso    = 0;
+unsigned long momentoDemo = 0;
+
+char linea[120];
+byte usados     = 0;
+bool desbordada = false;
+byte barras     = 0;
+unsigned long momentoLetra = 0;
+
+bool          totalPendiente = false;
+unsigned long momentoUltimo  = 0;
+char          totalGuardado[16];
+
+bool          luzEncendida = false;
+unsigned long momentoLuz   = 0;
+
+void setup() {
+  Serial.begin(9600);
+
+  pinMode(PIN_VERDE,    OUTPUT);
+  pinMode(PIN_ROJO,     OUTPUT);
+  pinMode(PIN_ZUMBADOR, OUTPUT);
+  apagarLuces();
+
+  lcd.begin(16, 2);
+
+  lcd.setBacklight(1);
+
+  Serial.println("READY");
+  mostrar("Libreria lista", "Escanee un libro");
+
+  totalGuardado[0] = '\0';
+  momentoLetra = millis();
+  momentoDemo  = millis();
+}
+
+void loop() {
+
+  while (Serial.available()) {
+    char c = Serial.read();
+
+    if (c == '\n' || c == '\r' || c == '#') {
+      cerrarLinea();
+
+    } else if (usados < sizeof(linea) - 1) {
+      linea[usados++] = c;
+      if (c == '|') barras++;
+      momentoLetra = millis();
+
+    } else {
+
+      desbordada = true;
+    }
+  }
+
+  if (usados > 0 && barras >= 5 && (millis() - momentoLetra >= CIERRE_POR_SILENCIO)) {
+    cerrarLinea();
+  }
+
+  if (totalPendiente && (millis() - momentoUltimo >= ESPERA_DEL_TOTAL)) {
+    char fila[17];
+    snprintf(fila, sizeof(fila), "$%s", totalGuardado);
+    mostrar("TOTAL COMPRA", fila);
+    totalPendiente = false;
+  }
+
+  if (luzEncendida && (millis() - momentoLuz >= DURACION_DE_LA_LUZ)) {
+    apagarLuces();
+    luzEncendida = false;
+  }
+
+  if (MODO_DEMO && (millis() - momentoDemo >= 4000)) {
+    momentoDemo = millis();
+
+    strcpy(linea, DEMO[demoPaso]);
+    procesar(linea);
+
+    demoPaso = (demoPaso + 1) % DEMO_PASOS;
+  }
+}
+
+void cerrarLinea() {
+  linea[usados] = '\0';
+
+  if (desbordada) {
+    Serial.println("ERR:LARGO");
+  } else if (usados > 0) {
+    procesar(linea);
+  }
+
+  usados     = 0;
+  barras     = 0;
+  desbordada = false;
+}
+
+void procesar(char *texto) {
+
+  char *campo[6];
+  byte  cuantos = 0;
+
+  campo[cuantos++] = texto;
+  for (char *p = texto; *p && cuantos < 6; p++) {
+    if (*p == '|') {
+      *p = '\0';
+      campo[cuantos++] = p + 1;
+    }
+  }
+
+  if (cuantos < 6) {
+
+    Serial.println("ERR:FORMATO");
+    return;
+  }
+
+  char  accion     = campo[0][0];
+  bool  encontrado = (campo[1][0] == '1');
+  char *codigo     = campo[2];
+  char *titulo     = campo[3];
+  char *precio     = campo[4];
+  char *total      = campo[5];
+
+  char fila[17];
+
+  if (accion == 'C') {
+    apagarLuces();
+    luzEncendida = false;
+    tone(PIN_ZUMBADOR, BIP_CIERRE_TONO, BIP_CIERRE_DURA);
+    snprintf(fila, sizeof(fila), "$%s", total);
+    mostrar("Pedido cerrado", fila);
+    totalPendiente = false;
+    Serial.println("OK");
+    return;
+  }
+
+  if (encontrado) {
+    digitalWrite(PIN_VERDE, HIGH);
+    digitalWrite(PIN_ROJO,  LOW);
+
+    tone(PIN_ZUMBADOR, BIP_OK_TONO, BIP_OK_DURACION);
+    snprintf(fila, sizeof(fila), "$%s", precio);
+    mostrar(titulo, fila);
+  } else {
+    digitalWrite(PIN_VERDE, LOW);
+    digitalWrite(PIN_ROJO,  HIGH);
+    tone(PIN_ZUMBADOR, BIP_MAL_TONO, BIP_MAL_DURACION);
+
+    mostrar("NO ENCONTRADO", codigo);
+  }
+
+  luzEncendida = true;
+  momentoLuz   = millis();
+
+  if (accion == 'V') {
+    strncpy(totalGuardado, total, sizeof(totalGuardado) - 1);
+    totalGuardado[sizeof(totalGuardado) - 1] = '\0';
+    momentoUltimo  = millis();
+    totalPendiente = true;
+  } else {
+
+    totalPendiente = false;
+  }
+
+  Serial.println("OK");
+}
+
+void mostrar(const char *arriba, const char *abajo) {
+
+  lcd.clear();
+
+  lcd.setCursor(0, 0);
+  for (byte i = 0; i < 16 && arriba[i] != '\0'; i++) lcd.write(arriba[i]);
+
+  lcd.setCursor(0, 1);
+  for (byte i = 0; i < 16 && abajo[i] != '\0'; i++) lcd.write(abajo[i]);
+
+  Serial.println("+----------------+");
+  renglon(arriba);
+  renglon(abajo);
+  Serial.println("+----------------+");
+}
+
+void renglon(const char *texto) {
+  Serial.print('|');
+
+  byte i = 0;
+  while (i < 16 && texto[i] != '\0') {
+    Serial.write(texto[i]);
+    i++;
+  }
+  while (i < 16) {
+    Serial.write(' ');
+    i++;
+  }
+
+  Serial.println('|');
+}
+
+void apagarLuces() {
+  digitalWrite(PIN_VERDE, LOW);
+  digitalWrite(PIN_ROJO,  LOW);
+}

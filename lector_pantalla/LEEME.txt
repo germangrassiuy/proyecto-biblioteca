@@ -1,0 +1,51 @@
+LECTOR USB -> COMPUTADORA -> ARDUINO UNO -> LCD I2C 16x2
+
+1. En Arduino IDE abrí lector_pantalla.ino dentro de esta carpeta.
+2. En el gestor de bibliotecas instalá "hd44780" de Bill Perry.
+   Este programa detecta la dirección I2C automáticamente.
+3. Elegí Arduino Uno y su puerto. Cargá el programa.
+4. La LCD debe mostrar "Lector listo / Escanee un libro".
+5. Cerrá Monitor serie y Plotter serie: no pueden ocupar el puerto al mismo tiempo que la web.
+6. Serví esta carpeta en localhost. Si usan XAMPP: copiarla dentro de htdocs,
+   iniciar Apache y abrir http://localhost/lector_pantalla/ en Chrome o Edge de escritorio.
+   No necesita PHP ni SQL para esta primera prueba.
+   Alternativa, con Python instalado: abrir una terminal en esta carpeta y ejecutar
+   python -m http.server 8000 --bind 127.0.0.1
+   Luego visitar http://localhost:8000 . Mantener esa terminal abierta.
+7. Pulsá Conectar Arduino y elegí el puerto del Uno (no el lector).
+8. Esperá "Conectado". Si no aparece, pulsá RESET en la placa.
+9. Hacé clic en el campo del código y escaneá. El Enter del lector lo envía.
+
+CABLEADO (pantalla LCD I2C típica de 5 V):
+GND -> GND, VCC -> 5V, SDA -> A4, SCL -> A5.
+No conectar los dos pines de puente de la retroiluminación al Arduino.
+
+PRUEBA SIN LECTOR:
+Escribí 9780306406157 y pulsá Enviar. Debe aparecer en la segunda fila de la LCD.
+Probá después 1234: no deben quedar restos del código anterior.
+Esta versión muestra códigos numéricos de 1 a 16 dígitos. No valida el dígito
+de control ni consulta libros/precios. No recorta silenciosamente entradas largas.
+
+SI NO FUNCIONA:
+- Fondo encendido pero sin letras: ajustar suavemente el potenciómetro de contraste.
+- ERR:LCD: revisar cableado con alimentación desconectada. Ejecutar ejemplo
+  Archivo > Ejemplos > hd44780 > ioClass > hd44780_I2Cexp > I2CexpDiag.
+- Puerto ocupado: cerrar monitor serie, otras páginas o aplicaciones que lo usen.
+- Sin READY: programa no cargado, puerto equivocado o placa sin reiniciar.
+- No aparece un puerto: comprobar cable USB de datos y controlador del Uno/clon.
+- El lector escribe en otro lugar: volver a hacer clic dentro del campo.
+- Pantalla de 20x2: adaptar las dimensiones; esta entrega asume 16x2.
+
+PROTOCOLO PARA FUTURA INTEGRACIÓN:
+PC envía dígitos y LF (\n) a 9600 baudios.
+Arduino responde READY al arrancar, OK:codigo al escribir en LCD,
+ERR:LCD si no detecta pantalla o ERR:CODIGO para entrada incorrecta.
+El navegador exige seleccionar el puerto con una acción del usuario.
+Usar localhost o HTTPS. La comunicación serial está implementada en JavaScript.
+
+No probado con tu hardware físico. La confirmación OK informa que el programa
+ejecutó la escritura; no puede comprobar visualmente contraste ni contenido real.
+
+Referencias:
+https://github.com/duinoWitchery/hd44780
+https://developer.chrome.com/docs/capabilities/serial

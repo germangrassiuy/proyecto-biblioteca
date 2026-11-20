@@ -1,0 +1,8 @@
+# Los .bat tienen que llegar con saltos de linea de Windows (CRLF):
+# con los de Linux, cmd.exe a veces se saltea o corta lineas.
+*.bat text eol=crlf
+*.sh  text eol=lf
+
+# Los ejecutables y librerias de PHP, tal cual.
+*.exe binary
+*.dll binary

@@ -1,0 +1,183 @@
+LIBRERIA - HTML + CSS + PHP + SQL + un Arduino
+===============================================
+
+COMO ARRANCARLO
+  1. Doble clic en INICIAR.bat (esta en la carpeta de arriba de esta).
+     Prende el servidor de PHP que viene en php\ y abre el navegador en
+     http://localhost:8765/ . La ventana negra que queda abierta ES el
+     servidor: si se cierra, el sistema se apaga.
+  2. La base de datos se crea sola la primera vez, en datos\biblioteca.sqlite,
+     leyendo biblioteca.sql. No hay que importar nada.
+     Para empezar de cero: cerrar el sistema y borrar la carpeta datos\.
+  3. Entrar con una de las cuentas de prueba:
+        admin   / admin123     ve el mostrador, los libros, el stock
+        cliente / cliente123   ve solamente el catalogo
+  4. Enchufar el Arduino y pulsar "Conectar Arduino" UNA vez por jornada.
+
+
+LOS ARCHIVOS
+  entrar.php      Pantalla de acceso. salir.php cierra la sesion.
+  catalogo.php    Lo que ve el cliente: un libro por fila, con un tag por
+                  cada formato en que se consigue.
+  mostrador.php   La pantalla principal. NO se recarga nunca: adentro tiene
+                  un iframe con escaneo.php. Aca vive la conexion al Arduino.
+  escaneo.php     Lo que pasa adentro del iframe: campo, resultado, total.
+  arduino.js      El UNICO JavaScript. Solo manda la linea al puerto serie.
+  libros.php      Alta y listado de titulos.
+  ejemplares.php  Alta y listado de ejemplares (lo que se escanea).
+  alquileres.php  Que libros estan afuera, quien los tiene, y devolverlos.
+  clientes.php    Alta y listado de clientes.
+  db.php          Conexion y funciones comunes.
+  estilos.css     Todo el diseno.
+  biblioteca.sql  Las siete tablas y el catalogo de 100 titulos (SQLite).
+  bluetooth.js    Lo mismo que arduino.js, pero por el modulo HC-08.
+  arduino/libreria_simple_fisico/libreria_simple_fisico.ino
+                  El programa de la placa.
+
+
+LOS DOS MODOS
+  Modo scanner  Cada escaneo muestra el precio y los datos. No suma nada.
+  Modo venta    Cada escaneo muestra lo mismo, pero ademas va sumando.
+                A los 3 segundos sin escanear aparece el total de la compra,
+                en la pantalla y en la LCD. "Cobrar y cerrar" guarda la venta,
+                descuenta el stock y vuelve todo a cero.
+
+  Si un codigo NO se encuentra, el total no se toca: sigue como estaba.
+
+
+PARA PROBAR SIN EL LECTOR
+  Escribir el codigo a mano en el campo y pulsar Enter. Es EXACTAMENTE lo mismo
+  que hace el lector, porque el lector se comporta como un teclado: escribe los
+  caracteres y manda un Enter. Para el software no hay ninguna diferencia.
+
+  Hay 100 titulos reales cargados y 200 articulos:
+    V0001 a V0080   los de venta     (siempre nuevos)
+    A0001 a A0070   los de alquiler  (casi todos usados)
+    D0001 a D0050   los digitales    (sin limite de stock)
+    NADA            no existe: sirve para probar el LED rojo
+
+  V0001 y A0001 son el MISMO libro: uno nuevo para vender y otro usado
+  para alquilar. Esa es la razon de que cada ejemplar lleve su etiqueta.
+
+  Prueba recomendada en modo venta:
+    V0001 -> V0002 -> NADA -> A0001, y despues esperar 3 segundos.
+    El codigo inexistente no suma ni resetea nada: el total sigue igual.
+
+
+EL CABLEADO DEL ARDUINO
+  LCD I2C:   GND->GND   VCC->5V   SDA->A4   SCL->A5
+  LED verde: pata larga -> pin 12, pata corta -> resistencia -> GND
+  LED rojo:  pata larga -> pin 10, pata corta -> resistencia -> GND
+  Zumbador:  pata + -> pin 7, pata - -> GND
+  HC-08:     VCC -> 5V, GND -> GND, TXD -> pin 2, RXD sin conectar
+  (Recableado el 19/11/2026. El programa es arduino/libreria_simple_fisico/
+   y los pines estan escritos una sola vez, arriba de todo.)
+
+  La resistencia (220 o 330 ohm) no es opcional: sin ella el LED se quema.
+  El verde se prende cuando el libro existe; el rojo cuando no. Cada uno
+  queda prendido hasta el escaneo siguiente.
+
+  El zumbador hace un bip agudo y corto cuando encuentra el libro, y uno
+  grave y largo cuando no. Se distinguen sin mirar la pantalla.
+
+
+EL MENSAJE QUE VIAJA AL ARDUINO
+  Una linea de texto terminada en salto de linea, a 9600 baudios:
+
+    texto|precio|existe
+
+    texto:   lo que va arriba en la LCD (el titulo, "Total", "NO ENCONTRADO")
+    precio:  lo que va abajo, con el $ adelante
+    existe:  1 = prende el verde, 0 = prende el rojo
+
+  Ejemplo:  Cien anos de soledad|450.00|1
+
+  El Arduino contesta "recibi: [...]" con lo que entendio. Al arrancar
+  dice READY, y antes ERR:LCD si no encuentra la pantalla.
+
+
+POR QUE ESTA HECHO ASI
+  Hay dos decisiones que parecen raras y tienen su explicacion escrita:
+
+  - Por que se escanea una etiqueta propia y no el ISBN de la tapa
+    -> comentado dentro de biblioteca.sql
+
+  - Por que la pagina de afuera no se recarga nunca, y por que el unico
+    JavaScript esta ahi -> explicaciones/01 y explicaciones/02
+
+
+SI ALGO NO ANDA
+  "No se pudo abrir la base"       -> la carpeta esta en un lugar sin permiso
+                                      de escritura (por ejemplo un pendrive
+                                      protegido). Copiarla al Escritorio.
+  La pagina se ve como texto plano -> la abriste con doble clic en vez de con
+                                      INICIAR.bat. PHP necesita el servidor.
+  La ventana negra se cierra sola  -> leer el mensaje: casi siempre es que el
+                                      puerto 8765 lo usa otro programa.
+  "Conectar Arduino" no hace nada  -> abrila en Chrome o Edge de escritorio.
+  ERR:LCD                          -> revisar el cableado del I2C.
+  El LED no prende                 -> revisar la resistencia y que la pata
+                                      larga vaya al pin 12 o al 10.
+  El puerto esta ocupado           -> cerrar el Monitor Serie del Arduino IDE.
+
+
+LAS CUENTAS
+  Hay dos roles y NO ven lo mismo:
+    admin    mostrador, catalogo, libros, ejemplares, clientes
+    cliente  solamente el catalogo
+
+  Importante: no alcanza con esconder botones del menu. Cada pagina de
+  admin pregunta de nuevo quien entro (la funcion soloAdmin() de db.php).
+  Sin eso, un cliente entraria escribiendo la direccion a mano.
+
+  Las contrasenias NO se guardan: se guarda un hash del que no se puede
+  volver atras. Ni nosotros podemos saber la clave de un usuario.
+
+
+EL STOCK, LAS DOS CIFRAS
+  stock_total       cuantos tiene la libreria
+  stock_disponible  cuantos hay AHORA en el local
+
+  Al alquilar un libro baja el disponible y el total queda igual: el
+  libro sigue siendo de la libreria, solo que hoy no esta. Al devolverlo,
+  el disponible vuelve a subir. En venta las dos bajan juntas. En digital
+  las dos van en NULL, porque un archivo no se agota.
+
+
+LAS TAPAS
+  Van en la carpeta portadas/ y en la base se guarda solo el NOMBRE del
+  archivo. Los libros sin tapa cargada se muestran con una tapa dibujada
+  con el titulo. Hoy los 100 estan asi: no se bajaron tapas de internet
+  por derechos de autor, y porque en el liceo sin conexion se romperian.
+
+
+COBRAR UN PEDIDO
+  Al cobrar pasan cinco cosas, y TODAS tienen que pasar o NINGUNA:
+    1. se revisa que haya stock
+    2. se guarda la cabecera de la venta
+    3. se guarda una linea por articulo
+    4. se descuenta el stock
+    5. si hay alquileres, se anota quien se llevo cada libro
+
+  Van adentro de una TRANSACCION. Si falla cualquiera, la base vuelve
+  sola al estado anterior y no se cobra nada. Sin eso, un corte de luz
+  entre el paso 3 y el 4 dejaria la venta guardada y el stock sin
+  descontar: la libreria creeria tener libros que ya vendio.
+
+  El cliente es OPCIONAL en una venta (nadie tiene que dar su nombre
+  para comprar un libro) y OBLIGATORIO si hay un alquiler: si no se sabe
+  quien se lo llevo, no hay a quien reclamarselo.
+
+  Que le pasa al stock segun el tipo:
+    venta     bajan las dos cifras: el libro se fue y no vuelve
+    alquiler  baja solo "en tienda"; el total queda igual
+    digital   no pasa nada: un archivo no se agota
+
+DEVOLVER UN ALQUILER
+  En alquileres.php, boton "Devolver". Sube el stock en tienda y le pone
+  la fecha de devolucion a la fila. La fila NO se borra nunca: asi queda
+  el historial de todo lo que se alquilo alguna vez.
+
+  Las fechas las pone SIEMPRE la base con CURDATE(), nunca PHP con
+  date(). Si hay dos relojes en zonas distintas, una venta de las 23:15
+  queda fechada hoy y su alquiler maniana, y los dias afuera salen mal.

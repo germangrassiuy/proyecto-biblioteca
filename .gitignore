@@ -1,0 +1,9 @@
+# Material del docente (guias, respuestas, fotos del lector): queda solo
+# en la PC de desarrollo, no se publica.
+*.pdf
+*.zip
+EMPEZAR AQUI.txt
+
+# La base de datos se crea sola la primera vez que se abre el sistema.
+# Cada computadora tiene la suya, con sus propias ventas y alquileres.
+libreria/datos/
