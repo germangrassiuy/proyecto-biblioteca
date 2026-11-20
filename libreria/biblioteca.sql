@@ -424,6 +424,17 @@ INSERT INTO libros (isbn, nombre, autor) VALUES
     ('9788535152784', 'El retrato de Dorian Gray', 'Oscar Wilde'),
     ('9788536531892', 'Diario de Ana Frank', 'Ana Frank');
 
+-- LAS ETIQUETAS IMPRESAS
+-- La mayoria de los codigos son V0001, A0001, D0001... Pero cuatro ejemplares
+-- de venta llevan el numero de las etiquetas que ya estan impresas y pegadas
+-- en los libros de verdad (codigos de barras EAN-13, que el lector lee):
+--    9789974000018  El principito         (era V0060)
+--    9789974000025  Rayuela               (era V0006)
+--    9789974000032  La tregua             (era V0019)
+--    9789974000049  Cuentos de la selva   (era V0025)
+-- Para el sistema no hay ninguna diferencia: el codigo interno es TEXTO y
+-- puede ser cualquier cosa, mientras no se repita. Lo que importa es que lo
+-- que esta impreso en la etiqueta sea exactamente lo que esta en la base.
 INSERT INTO ejemplares (codigo_interno, libro_id, tipo, estado, precio, stock_total, stock_disponible) VALUES
     ('V0001', 1, 'venta', 'nuevo', 450.00, 2, 2),
     ('A0001', 1, 'alquiler', 'nuevo', 70.00, 1, 0),
@@ -439,7 +450,7 @@ INSERT INTO ejemplares (codigo_interno, libro_id, tipo, estado, precio, stock_to
     ('D0004', 4, 'digital', 'nuevo', 580.00, NULL, NULL),
     ('V0005', 5, 'venta', 'nuevo', 1140.00, 8, 8),
     ('A0005', 5, 'alquiler', 'usado', 170.00, 1, 1),
-    ('V0006', 6, 'venta', 'nuevo', 1320.00, 4, 4),
+    ('9789974000025', 6, 'venta', 'nuevo', 1320.00, 4, 4),
     ('A0006', 6, 'alquiler', 'usado', 200.00, 4, 2),
     ('D0005', 7, 'digital', 'nuevo', 890.00, NULL, NULL),
     ('V0007', 8, 'venta', 'nuevo', 1660.00, 7, 7),
@@ -471,7 +482,7 @@ INSERT INTO ejemplares (codigo_interno, libro_id, tipo, estado, precio, stock_to
     ('V0018', 22, 'venta', 'nuevo', 1480.00, 6, 6),
     ('A0016', 22, 'alquiler', 'nuevo', 220.00, 4, 2),
     ('D0012', 22, 'digital', 'nuevo', 890.00, NULL, NULL),
-    ('V0019', 23, 'venta', 'nuevo', 1660.00, 2, 2),
+    ('9789974000032', 23, 'venta', 'nuevo', 1660.00, 2, 2),
     ('A0017', 23, 'alquiler', 'usado', 250.00, 1, 0),
     ('D0013', 23, 'digital', 'nuevo', 1000.00, NULL, NULL),
     ('V0020', 24, 'venta', 'nuevo', 530.00, 9, 9),
@@ -485,7 +496,7 @@ INSERT INTO ejemplares (codigo_interno, libro_id, tipo, estado, precio, stock_to
     ('V0023', 28, 'venta', 'nuevo', 1220.00, 4, 4),
     ('V0024', 29, 'venta', 'nuevo', 1390.00, 11, 11),
     ('A0021', 30, 'alquiler', 'usado', 240.00, 4, 2),
-    ('V0025', 31, 'venta', 'nuevo', 1740.00, 3, 3),
+    ('9789974000049', 31, 'venta', 'nuevo', 1740.00, 3, 3),
     ('A0022', 31, 'alquiler', 'usado', 260.00, 1, 1),
     ('D0016', 31, 'digital', 'nuevo', 1040.00, NULL, NULL),
     ('V0026', 32, 'venta', 'nuevo', 610.00, 10, 10),
@@ -574,7 +585,7 @@ INSERT INTO ejemplares (codigo_interno, libro_id, tipo, estado, precio, stock_to
     ('V0059', 73, 'venta', 'nuevo', 1210.00, 11, 11),
     ('A0052', 73, 'alquiler', 'usado', 180.00, 1, 1),
     ('D0038', 73, 'digital', 'nuevo', 730.00, NULL, NULL),
-    ('V0060', 74, 'venta', 'nuevo', 1380.00, 7, 7),
+    ('9789974000018', 74, 'venta', 'nuevo', 1380.00, 7, 7),
     ('A0053', 74, 'alquiler', 'usado', 210.00, 4, 2),
     ('D0039', 74, 'digital', 'nuevo', 830.00, NULL, NULL),
     ('V0061', 75, 'venta', 'nuevo', 1550.00, 3, 3),

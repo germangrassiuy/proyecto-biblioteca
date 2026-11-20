@@ -44,6 +44,7 @@ lo que hace el lector, que se comporta como un teclado.
 | `A0001` a `A0070` | libros para alquilar (casi todos usados) |
 | `D0001` a `D0050` | libros digitales (sin limite de stock) |
 | `NADA` | no existe: sirve para probar el LED rojo |
+| `9789974000018` ... `049` | las etiquetas impresas: El principito, Rayuela, La tregua, Cuentos de la selva |
 
 ## El Arduino
 
