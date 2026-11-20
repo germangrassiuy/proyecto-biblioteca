@@ -143,10 +143,30 @@ function soloIdentificado() {
 //
 //  El menu cambia segun el rol: cada uno ve el suyo.
 // ------------------------------------------------------------
-//  El tercer parametro existe por el mostrador: esa pagina no se puede
-//  recargar nunca (tiene el puerto del Arduino abierto), asi que sus
-//  enlaces tienen que abrirse en otra pestania. Ver explicaciones/02.
-function cabecera($titulo, $actual = '', $enlacesEnOtraPestania = false) {
+//  EL MOSTRADOR Y SU RECUADRO
+//  El mostrador no se puede recargar nunca: tiene abierta la conexion
+//  con el Arduino (ver explicaciones/02). Por eso, en el mostrador, los
+//  enlaces del menu no cambian la pagina entera: abren la seccion ADENTRO
+//  del recuadro (el iframe que se llama "panel"), con target="panel".
+//  El tercer parametro de cabecera() es para eso.
+//
+//  Y una pagina que se muestra adentro del recuadro no dibuja su propio
+//  encabezado ni su menu: ya estan los del mostrador, arriba. Para
+//  saber donde la estan mostrando se usa enElPanel().
+// ------------------------------------------------------------
+
+// enElPanel() - esta pagina se esta mostrando adentro del mostrador?
+//
+// En cada pedido, el navegador le manda al servidor un renglon que dice
+// PARA QUE es lo que pide: Sec-Fetch-Dest. Vale "document" si es una
+// pagina entera, "iframe" si va adentro de un recuadro, "image" si es
+// una imagen, etc. PHP lo lee en $_SERVER, como todo lo que manda el
+// navegador. Asi no hace falta agregarle nada a cada enlace.
+function enElPanel() {
+    return ($_SERVER['HTTP_SEC_FETCH_DEST'] ?? '') === 'iframe';
+}
+
+function cabecera($titulo, $actual = '', $esElMostrador = false) {
     $u = usuarioActual();
 
     $menu = esAdmin()
@@ -159,6 +179,19 @@ function cabecera($titulo, $actual = '', $enlacesEnOtraPestania = false) {
     echo '<meta name="viewport" content="width=device-width,initial-scale=1">';
     echo '<title>Libreria &middot; ' . esc($titulo) . '</title>';
     echo '<link rel="stylesheet" href="estilos.css">';
+
+    // Adentro del recuadro: sin encabezado ni menu, ya estan afuera.
+    if (enElPanel()) {
+        echo '<body class="panel">';
+        return;
+    }
+
+    // En el mostrador, "Mostrador" no recarga el mostrador: vuelve a
+    // poner la pantalla de escaneo en el recuadro.
+    if ($esElMostrador) {
+        $menu = ['escaneo.php' => 'Mostrador'] + array_slice($menu, 1, null, true);
+    }
+
     echo '<body>';
     echo '<header><div class="barra"><h1>Libreria</h1>';
 
@@ -169,9 +202,11 @@ function cabecera($titulo, $actual = '', $enlacesEnOtraPestania = false) {
            . ' &middot; <a href="salir.php">Salir</a></div>';
     }
     echo '</div><nav>';
-    $destino = $enlacesEnOtraPestania ? ' target="_blank"' : '';
+    $destino = $esElMostrador ? ' target="panel"' : '';
     foreach ($menu as $archivo => $rotulo) {
-        if ($archivo === $actual) {
+        // En el mostrador no se marca ninguna seccion: lo que cambia es el
+        // recuadro, y esta pagina (que no se recarga) no se entera.
+        if ($archivo === $actual && !$esElMostrador) {
             // El enlace a la pagina en la que ya estamos no necesita
             // abrir nada: se marca y listo.
             echo '<a href="' . $archivo . '" class="activo">' . $rotulo . '</a> ';

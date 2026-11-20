@@ -142,8 +142,11 @@ sola vez y no se recarga nunca: ahi vive la conexion al Arduino. Adentro tiene
 un `<iframe>` con `escaneo.php`, y ese es el unico que se recarga. El puerto se
 abre una vez por jornada y la placa se reinicia una sola vez.
 
-Precio a pagar: los enlaces de la pagina de afuera llevan `target="_blank"`,
-porque si navegaran en la misma ventana cerrarian el puerto.
+Precio a pagar: los enlaces de la pagina de afuera no pueden navegar la misma
+ventana, porque cerrarian el puerto. Primero se abrieron en otra pestania
+(`target="_blank"`); desde el 20/11 se abren **adentro del recuadro**
+(`target="panel"`), porque con pestanias se terminaban abriendo dos mostradores
+y el segundo decia "no conectado" con el puerto ocupado por el primero.
 
 Explicado en `explicaciones/02-recarga-y-puerto-serie.md`.
 

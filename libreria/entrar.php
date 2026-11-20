@@ -63,7 +63,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     <p class="error"><?= esc($error) ?></p>
 <?php endif; ?>
 
-    <form method="post" action="entrar.php" class="alta">
+    <!-- target="_top": entrar siempre carga la ventana ENTERA. Si la
+         sesion vence mientras se usa una seccion adentro del recuadro del
+         mostrador, este formulario aparece ahi adentro; sin _top, el
+         mostrador completo terminaria metido dentro de su propio recuadro. -->
+    <form method="post" action="entrar.php" class="alta" target="_top">
         <label>Usuario
             <input type="text" name="usuario" autocomplete="off" autofocus>
         </label>

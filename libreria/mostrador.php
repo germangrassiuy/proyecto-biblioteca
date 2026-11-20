@@ -17,8 +17,12 @@
 //  directamente imposible de usar.
 //  (Ver explicaciones/02-recarga-y-puerto-serie.md)
 //
-//  Por eso la cabecera se pide con los enlaces en otra pestania: si
-//  navegaran en esta ventana, cerrarian el puerto.
+//  Por eso los enlaces del menu se abren ADENTRO del recuadro (el
+//  iframe "panel") y no en esta ventana: si la navegaran, cerrarian el
+//  puerto. Antes se abrian en otra pestania, y eso tenia una trampa: si
+//  desde esa pestania se volvia a "Mostrador", quedaban DOS mostradores,
+//  uno con el puerto y otro que decia "no conectado" y no podia
+//  conectarse porque el puerto ya estaba ocupado por el primero.
 // ============================================================
 require 'db.php';
 soloAdmin();
@@ -26,7 +30,7 @@ soloAdmin();
 cabecera('Mostrador', 'mostrador.php', true);
 ?>
 
-<main>
+<main class="ancho">
     <div class="conexion">
         <button id="conectar">Conectar Arduino</button>
         <span id="estado" class="estado">Sin conectar. La busqueda funciona igual; solo no se prende el LED ni la pantalla.</span>

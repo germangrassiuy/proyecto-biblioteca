@@ -70,7 +70,10 @@ button:disabled { opacity: .45; cursor: default; }
 /* ---------- El iframe donde pasa todo ---------- */
 iframe {
     width: 100%;
-    height: 560px;
+    /* Alto: lo que queda de la ventana debajo del encabezado, y nunca
+       menos de 560px. Ahora adentro se abren tambien el catalogo y las
+       tablas, que son largos. */
+    height: max(560px, calc(100vh - 230px));
     border: 1px solid #d3e0da;
     border-radius: 14px;
     background: white;

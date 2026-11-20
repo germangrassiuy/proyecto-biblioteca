@@ -96,19 +96,44 @@ publicidad metida en un sitio podria manejar el sitio entero.
 
 ## El detalle que se paga por esto
 
-Todo enlace de la pagina de afuera tiene que abrirse en **otra pestania**:
-
-```html
-<a href="libros.php" target="_blank">Libros</a>
-```
-
-Sin ese `target="_blank"`, hacer clic en "Libros" navegaria la ventana entera,
+Ningun enlace de la pagina de afuera puede cambiar la ventana entera: eso
 destruiria la pagina de afuera y cerraria el puerto. Volveriamos al problema del
 principio por haber hecho clic en el lugar equivocado.
 
+Por eso los enlaces del menu abren la seccion **adentro del recuadro**, nombrando
+al iframe:
+
+```html
+<iframe src="escaneo.php" name="panel"></iframe>
+...
+<a href="libros.php" target="panel">Libros</a>
+```
+
+`target="panel"` le dice al navegador "esto se abre en el recuadro que se llama
+panel". La pagina de afuera ni se entera, y el puerto sigue abierto.
+
+**La primera version lo resolvia distinto, y salio mal.** Los enlaces se abrian
+en otra pestania (`target="_blank"`). Parecia lo mismo, pero tenia una trampa: si
+desde esa pestania nueva se volvia a "Mostrador", quedaban **dos mostradores**
+abiertos. El primero tenia el puerto; el segundo decia "Arduino no conectado", y
+al tocar "Conectar" el navegador contestaba que el puerto estaba **ocupado**...
+ocupado por el primero. Para el operador, el sistema "se desconectaba solo".
+
 Es un buen ejemplo de algo que pasa seguido al programar: **una decision de
-diseño te obliga a otras**. No hay soluciones gratis; hay soluciones cuyo precio
-te conviene pagar.
+diseño te obliga a otras**, y a veces la primera que se te ocurre tiene un precio
+escondido que aparece recien cuando alguien la usa de verdad.
+
+### Y las paginas, como saben que estan adentro del recuadro
+
+Una seccion abierta adentro del recuadro no tiene que dibujar su propio
+encabezado ni su menu: ya estan los del mostrador, arriba. Pero la misma
+seccion, abierta en una ventana sola, si los necesita.
+
+No hace falta avisarle: **el navegador lo dice solo**. En cada pedido manda un
+renglon, `Sec-Fetch-Dest`, que dice para que es lo que pide: `document` si es una
+pagina entera, `iframe` si va adentro de un recuadro, `image` si es una imagen.
+PHP lo lee como cualquier otro dato que manda el navegador
+(`$_SERVER['HTTP_SEC_FETCH_DEST']`). Esta en la funcion `enElPanel()` de `db.php`.
 
 ## Lo que descartamos, y por que
 
@@ -129,7 +154,7 @@ buscar la solucion adentro de esas herramientas. Y aparecio.
 1. ¿Por que el Arduino se reinicia al abrir el puerto? ¿A quien le sirve eso?
 2. Si el reinicio tardara 50 milisegundos en vez de 2 segundos, ¿haria falta el
    iframe? ¿Que otra cosa cambiaria en la decision?
-3. ¿Que pasaria si sacaramos el `target="_blank"` del enlace a Libros?
+3. ¿Que pasaria si sacaramos el `target="panel"` del enlace a Libros?
    Descubrilo probandolo, y mira el mensaje de estado de la pagina.
 4. El iframe es una tecnica vieja, de antes de que existieran estas soluciones
    modernas. ¿Por que sigue sirviendo? ¿Que problema resuelve que no cambio con
