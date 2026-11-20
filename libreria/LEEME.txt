@@ -4,7 +4,7 @@ LIBRERIA - HTML + CSS + PHP + SQL + un Arduino
 COMO ARRANCARLO
   1. Doble clic en INICIAR.bat (esta en la carpeta de arriba de esta).
      Prende el servidor de PHP que viene en php\ y abre el navegador en
-     http://localhost:8765/ . La ventana negra que queda abierta ES el
+     http://127.0.0.1:8642/ . La ventana negra que queda abierta ES el
      servidor: si se cierra, el sistema se apaga.
   2. La base de datos se crea sola la primera vez, en datos\biblioteca.sqlite,
      leyendo biblioteca.sql. No hay que importar nada.
@@ -113,7 +113,8 @@ SI ALGO NO ANDA
   La pagina se ve como texto plano -> la abriste con doble clic en vez de con
                                       INICIAR.bat. PHP necesita el servidor.
   La ventana negra se cierra sola  -> leer el mensaje: casi siempre es que el
-                                      puerto 8765 lo usa otro programa.
+                                      puerto 8642 lo usa otro programa.
+                                      Se cambia en INICIAR.bat (PUERTO=).
   "Conectar Arduino" no hace nada  -> abrila en Chrome o Edge de escritorio.
   ERR:LCD                          -> revisar el cableado del I2C.
   El LED no prende                 -> revisar la resistencia y que la pata

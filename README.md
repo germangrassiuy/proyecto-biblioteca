@@ -20,7 +20,7 @@ de datos es SQLite, un archivo que se crea solo.
    - con git: `git clone https://github.com/germangrassiuy/proyecto-biblioteca.git`
    - o sin git: boton verde **Code** -> **Download ZIP**, y descomprimirlo.
 2. Doble clic en **`INICIAR.bat`**.
-3. Se abre el sistema en Edge (`http://localhost:8765/`). Entrar con:
+3. Se abre el sistema en Edge (`http://127.0.0.1:8642/`). Entrar con:
 
    | Usuario | Clave | Que ve |
    |---|---|---|
